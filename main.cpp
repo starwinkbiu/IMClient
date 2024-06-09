@@ -1,23 +1,19 @@
-#include "maindialog.h"
-#include "CKernel.h"
-#include "CThreadPool.h"
-#include <QApplication>
 #include <QDebug>
 #include <iostream>
-#include <unistd.h>
-
-#include <string>
-
-#include <fstream>
-#include "json.hpp"
+#include <QApplication>
+#include "CKernel.h"
+#include "maindialog.h"
 
 
 using namespace std;
-typedef nlohmann::json json;
+//typedef nlohmann::json json;
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    CKernel kernel = CKernel();
+
+    CKernel* kernel = new CKernel;
+    kernel->kernelRun();
+
     return a.exec();
 }

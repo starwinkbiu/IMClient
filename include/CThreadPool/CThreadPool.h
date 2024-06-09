@@ -1,3 +1,6 @@
+#ifndef CTHREADPOOL_H
+#define CTHREADPOOL_H
+
 #include <QMutex>
 #include <QWaitCondition>
 #include <QSemaphore>
@@ -116,3 +119,5 @@ public:
     // 添加管理者
     static unsigned manager(void* arg);
 };
+
+#endif

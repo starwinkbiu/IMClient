@@ -1,45 +1,60 @@
-#include <iostream>
 #include "CKernel.h"
-#include "CThreadPool.h"
-#include "CTcpClientMed.h"
-#include <QDebug>
 
 using namespace std;
 
-// 构造函数
-CKernel::CKernel(){
-    // 建立MainDialog
-    m_pMainDialog = new MainDialog;
-    m_pMainDialog->showNormal();
-    // 初始化线程池
-    initThreadPool();
-    // 使用 TCP 连接到服务器
-//    connectToTcpServer();
+void TcpUnitTest(CKernel* pThis){
+    const char testcontent[] = "nihao";
+    for(int i=0;i<10;i++){
+        pThis->TcpNet_sendData(testcontent, strlen(testcontent));
+    }
+
 }
+
+// 构造函数
+CKernel::CKernel(){}
 
 // 析构函数
 CKernel::~CKernel(){
     qDebug() << __func__;
 }
 
-
-unsigned addd(void* _arg){
-    timespec ts;
-    ts.tv_sec = 5;
-    ts.tv_nsec = 0;
-    nanosleep(&ts, NULL);
+void CKernel::kernelRun()
+{
+    // 建立MainDialog
+    m_pMainDialog = new MainDialog;
+    m_pMainDialog->showNormal();
+    // 初始化线程池
+    createLinkThreadPool();
+    // 使用 TCP 连接到服务器
+    createLinkTcpClient();
+    // 测试Tcp模块
+//    TcpUnitTest(this);
 }
 
+
 // 初始化线程池
-void CKernel::initThreadPool(){
+void CKernel::createLinkThreadPool(){
     m_pTpool = new CThreadPool();
     m_pTpool->initThreadPool(this, 50, 5, 50000);
     m_pTpool->startThreadPool();
+    return;
 }
 
-void CKernel::connectToTcpServer(){
-    m_pTcpMed = new CTcpClientMed(this);
-    // 打开 TCP 网络
-    m_pTcpMed->openINet();
-    m_pTcpMed->sendData("hello", 5, 0);
+void CKernel::createLinkTcpClient(){
+    m_pTcpClient = new TcpNetApi;
+    m_pTcpClient->initClient();
+    m_pTcpClient->startClient("192.168.150.128", 12345);
+    return;
+}
+
+void CKernel::TcpNet_sendData(const char *_szBuf, int _iSize)
+{
+    message_t* mt = new message_t;
+    mt->initMessage();
+    mt->setMessage(_szBuf, _iSize, 1, 101);
+    m_pTcpClient->pushMessage(mt);
+}
+
+void CKernel::TcpNet_closeFromServer(){
+    m_pTcpClient->closeFromServer();
 }

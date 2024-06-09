@@ -10,15 +10,15 @@ typedef unsigned int uint;
 #define _DEF_TCP_SERVER_ADDR "192.168.227.130"
 #endif
 
-struct buffer_t{
-    buffer_t();
-    ~buffer_t();
-    int sizeLen;
-    int contentSize;
-    int pos;
-    char* buffer;
-    void initBuffer();
-};
+//struct buffer_t{
+//    buffer_t();
+//    ~buffer_t();
+//    int sizeLen;
+//    int contentSize;
+//    int pos;
+//    char* buffer;
+//    void initBuffer();
+//};
 
 class CTcpClient : public CINet{
 public:
@@ -26,12 +26,18 @@ public:
     ~CTcpClient();
     bool initNet();
     void unInitNet();
+    void connectServer();
+    void closeServer();
+    bool heartAlive();
+    void checkAliveLoop();
+    bool getConnected();
     void recvData();
     int sendData(char* _szBuf, int _iSize, long long sock);
     static unsigned beginRecvThread(void* _arg);
     bool isConnect();
-    SOCKET m_pSock;
+    SOCKET mSock;
+    bool connected;
     uint m_iTid;
     uintptr_t m_pHandle;
-    buffer_t m_tStatus;
+//    buffer_t m_tStatus;
 };

@@ -1,16 +1,29 @@
-#include <maindialog.h>
+#ifndef CKERNEL_H
+#define CKERNEL_H
 
-class CThreadPool;
-class CTcpClientMed;
+#include <maindialog.h>
+#include <QDebug>
+#include <iostream>
+#include "CThreadPool.h"
+#include "tcpnetapi.h"
+
+using namespace std;
 
 class CKernel{
 public:
-    MainDialog* m_pMainDialog;
-    CThreadPool* m_pTpool;
-    CTcpClientMed* m_pTcpMed;
     CKernel();
     ~CKernel();
-    void initThreadPool();
+    void kernelRun();
+    void createLinkThreadPool();
+    void createLinkTcpClient();
     void connectToTcpServer();
-    void TcpNet_sendData(char* _szBuf, int _iSize, long long sock);
+    void TcpNet_sendData(const char* _szBuf, int _iSize);
+    void TcpNet_closeFromServer();
+
+private:
+    MainDialog* m_pMainDialog;
+    CThreadPool* m_pTpool;
+    TcpNetApi* m_pTcpClient;
 };
+
+#endif // CKERNEL_H

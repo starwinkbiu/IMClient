@@ -22,7 +22,9 @@ void buffer_t::initBuffer(){
 }
 
 
-CTcpClient::CTcpClient(CINetMed* _m_pCINet) : CINet(_m_pCINet), m_pSock(INVALID_SOCKET), m_iTid(0), m_pHandle(0){}
+CTcpClient::CTcpClient(CINetMed* _m_pCINet) : CINet(_m_pCINet), mSock(INVALID_SOCKET), connected(false), m_iTid(0), m_pHandle(0){
+
+}
 
 CTcpClient::~CTcpClient(){
 }
@@ -37,31 +39,12 @@ bool CTcpClient::initNet(){
         qDebug() << "error[CTcpClient::initNet -> WSAStartup()]: " << WSAGetLastError();
         return err;
     }
-    // 申请套接字
-    m_pSock = socket(AF_INET, SOCK_STREAM, 0);
-    if(m_pSock == INVALID_SOCKET){
-        qDebug() << "error[CTcpClient::initNet -> socket()]: " << WSAGetLastError();
-        return SOCKET_ERROR;
-    }
-    // 连接套接字
-    sockaddr_in addr;
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(_DEF_TCP_PORT);
-    addr.sin_addr.S_un.S_addr = inet_addr(_DEF_TCP_SERVER_ADDR);
-    err = connect(m_pSock, (sockaddr*)&addr, sizeof addr);
-    if(err == SOCKET_ERROR){
-        qDebug() << "error[CTcpClient::initNet -> connect()]: " << WSAGetLastError();
-        return err;
-    }
-//    // 监听套接字
-//    err = listen(m_pSock, 128);
-//    if(err == SOCKET_ERROR){
-//        qDebug() << "error[CTcpClient::initNet -> bind()]: " << WSAGetLastError();
-//        return err;
-//    }
-    // 开始消息接收
-    m_pHandle = _beginthreadex(NULL, 0, &CTcpClient::beginRecvThread, this, 0, &m_iTid);
-    return 1;
+    // 连接服务器
+    connectServer();
+    // 开启循环心跳包检测线程(线程)
+
+    checkAliveLoop();
+    return true;
 }
 
 void CTcpClient::unInitNet(){
@@ -72,12 +55,50 @@ void CTcpClient::unInitNet(){
             TerminateThread((HANDLE)m_pHandle, -1);
         }
         // 关闭套接字
-        if(m_pSock)
-            closesocket(m_pSock);
+        if(mSock)
+            closesocket(mSock);
     }
     // 初始化接收状态
     m_tStatus.initBuffer();
 }
+
+
+void CTcpClient::connectServer(){
+    int err;
+    // 申请套接字
+    mSock = socket(AF_INET, SOCK_STREAM, 0);
+    if(mSock == INVALID_SOCKET){
+        qDebug() << "error[CTcpClient::initNet -> socket()]: " << WSAGetLastError();
+    }
+    // 连接套接字
+    sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(_DEF_TCP_PORT);
+    addr.sin_addr.S_un.S_addr = inet_addr(_DEF_TCP_SERVER_ADDR);
+    err = connect(mSock, (sockaddr*)&addr, sizeof addr);
+    if(err == SOCKET_ERROR){
+        qDebug() << "error[CTcpClient::initNet -> connect()]: " << WSAGetLastError();
+    }
+    // 开始消息接收
+    m_pHandle = _beginthreadex(NULL, 0, &CTcpClient::beginRecvThread, this, 0, &m_iTid);
+}
+void CTcpClient::closeServer(){
+
+}
+// 心跳机制
+bool CTcpClient::heartAlive(){
+
+}
+// 循环检测心跳
+void CTcpClient::checkAliveLoop(){
+
+}
+// 获取connected
+bool CTcpClient::getConnected(){
+
+}
+
+
 
 void CTcpClient::recvData(){
     // 调用 CTcpClientMed 中介者的 dealData 函数来进行处理
@@ -162,7 +183,6 @@ int CTcpClient::sendData(char* _szBuf, int _iSize, long long sock){
     }
     return err;
 }
-
 
 unsigned CTcpClient::beginRecvThread(void* _arg){
     CTcpClient* pThis = (CTcpClient*)_arg;

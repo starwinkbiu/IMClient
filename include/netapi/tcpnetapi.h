@@ -1,0 +1,87 @@
+#ifndef TCPNETAPI_H
+#define TCPNETAPI_H
+
+#include <winsock2.h>
+#include <QDebug>
+#include <QMutex>
+#include <QMutexLocker>
+#include <QWaitCondition>
+#include "CThreadPool.h"
+#include "ThreadSafeQueue.h"
+
+class CKernel;
+
+typedef struct buffer_t{
+    int nRecvSizeLen; // 表示前两个字节接收长度
+    int nRecvLen; // 表示数据接收总长度
+    short size; // 表示数据的长度
+    bool type; // 表示二进制数据还是协议数据
+    char* message; // 堆指针，存放接收的消息
+    void initBuffer();
+} buffer_t;
+
+/*
+------------------------------------------
+|  长度  |                 内容                   |
+------------------------------------------
+长度包含 1bit 处理模式和 7bit 内容长度
+内容中前 2Bytes 为协议号剩下的内容为协议的附带内容
+message_t:
+type: 代表处理模式
+size: 代表附带内容长度
+protocol: 代表协议号
+content: 为附带内容
+*/
+
+typedef struct message_t{
+    message_t();
+    ~message_t();
+    bool type; // 标识二进制数据还是协议数据
+    short size; // 消息的长度（协议+内容）
+    short protocol; // 协议
+    char* content; // 消息内容
+    void initMessage();
+    void setMessage(const char *_content, int _contentsize, bool _type, short _protocol);
+} message_t;
+
+class TcpNetApi
+{
+public:
+    TcpNetApi();
+    void initClient();
+    void startClient(const char* ip, short port);
+    bool connectServer(const char* ip, short port);
+    bool pushMessage(message_t* mt);
+    // 使用队列进行数据发送，实现异步
+    static unsigned sendMessageLoop(void* arg);
+    int recvMessage(buffer_t& bt);
+    void startRecvThread();
+    void startSendCustomerThread();
+    void startHeartLoopThread();
+    static unsigned recvMessageStatic(void* arg);
+    static unsigned heartAliveLoop(void* arg);
+    bool getConnected();
+    static void setReuseAddr(SOCKET sock);
+    void closeFromServer();
+    static bool checkThreadAlive(HANDLE handle);
+
+private:
+    bool connected;
+    SOCKET mSock;
+    HANDLE m_pHandle;
+    HANDLE m_pHandleSend;
+    HANDLE m_pHandleHeart;
+    unsigned int m_iTid;
+    unsigned int m_iTidSend;
+    unsigned int m_iTidHeart;
+    bool _exit = false;
+    bool _recvexit = false;
+    bool _sendexit = false;
+    CKernel* m_pkernel;
+    ThreadSafeQueue<message_t*> mTsq;
+//    QQueue<message_t*> mTsq;
+    bool sendingHeart;
+    bool sendingSuccess;
+};
+
+#endif // TCPNETAPI_H
