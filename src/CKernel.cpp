@@ -20,13 +20,14 @@ CKernel::~CKernel(){
 
 void CKernel::kernelRun()
 {
-    // 建立MainDialog
+
     m_pMainDialog = new MainDialog;
+    m_pMainDialog->setWindowFlags(Qt::FramelessWindowHint);
     m_pMainDialog->showNormal();
     // 初始化线程池
     createLinkThreadPool();
     // 使用 TCP 连接到服务器
-    createLinkTcpClient();
+//    createLinkTcpClient();
     // 测试Tcp模块
 //    TcpUnitTest(this);
 }
